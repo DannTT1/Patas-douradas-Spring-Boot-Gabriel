@@ -52,7 +52,15 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/usuarios", "/usuarios/login").permitAll()
-                        .requestMatchers("/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(
+                                        "/swagger-ui.html",
+                                        "/swagger-ui/**",
+                                        "/v3/api-docs",
+                                        "/v3/api-docs/**",
+                                        "/swagger-resources/**",
+                                        "/webjars/**",
+                                        "/h2-console/**"
+                                ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/produtos", "/produtos/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/produtos").hasRole("VENDEDOR")
                         .requestMatchers(HttpMethod.PUT, "/produtos/**").hasRole("VENDEDOR")
