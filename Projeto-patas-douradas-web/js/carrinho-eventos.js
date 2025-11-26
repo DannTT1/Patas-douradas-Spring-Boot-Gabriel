@@ -1,11 +1,12 @@
 function inicializarBotoesAdicionar() {
-    // Usa delegação de eventos para funcionar em elementos criados dinamicamente
+    // Ouve cliques na página inteira (para funcionar mesmo se os produtos carregarem depois)
     document.body.addEventListener('click', function(event) {
-        // Verifica se clicou no botão ou em algo dentro dele
+        // Verifica se clicou no botão de adicionar
         const btn = event.target.closest('.adicionar-carrinho-btn');
         
         if (btn) {
             const produtoId = btn.dataset.id;
+            console.log("Botão clicado! ID do produto:", produtoId); // Debug no Console
             adicionarProdutoAoCarrinho(produtoId);
         }
     });
@@ -13,55 +14,61 @@ function inicializarBotoesAdicionar() {
 
 async function adicionarProdutoAoCarrinho(produtoId) {
     try {
-        // 1. Busca o produto ATUALIZADO no Backend (Java)
+        // 1. Vai no Java buscar os dados ATUAIS do produto (Preço, Estoque, Imagem)
+        console.log(`Buscando dados do produto ${produtoId} no servidor...`);
         const response = await fetch(`http://localhost:8080/produtos/${produtoId}`);
         
         if (!response.ok) {
-            throw new Error("Erro ao consultar estoque no servidor.");
+            throw new Error("Erro ao comunicar com o servidor.");
         }
 
         const produtoDoBanco = await response.json();
+        console.log("Produto recebido do Java:", produtoDoBanco);
 
-        // 2. Prepara o objeto para salvar no carrinho (LocalStorage)
-        // Mapeamos os nomes do Java (imagemUrl, precoUnitario) para o padrão do carrinho (imagem, preco)
+        // 2. Monta o objeto para salvar no carrinho
+        // ATENÇÃO: Mapeamos os nomes do Java para o padrão do carrinho
         const itemParaCarrinho = {
             id: produtoDoBanco.id,
             nome: produtoDoBanco.nome,
-            preco: produtoDoBanco.precoUnitario, // Java manda precoUnitario
-            imagem: produtoDoBanco.imagemUrl,    // Java manda imagemUrl
+            // O Java manda 'precoUnitario', mas o carrinho espera 'preco'
+            preco: produtoDoBanco.precoUnitario, 
+            // O Java manda 'imagemUrl', mas o carrinho espera 'imagem'
+            imagem: produtoDoBanco.imagemUrl,    
             estoque: produtoDoBanco.estoque,
             quantidade: 1
         };
 
-        // 3. Lógica do Carrinho
+        // 3. Lógica de Adicionar/Incrementar no LocalStorage
         let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
         const itemExistente = carrinho.find(item => item.id == produtoId);
 
         if (itemExistente) {
             if (itemExistente.quantidade < itemParaCarrinho.estoque) {
                 itemExistente.quantidade++;
-                alert(`"${itemParaCarrinho.nome}" teve a quantidade aumentada!`);
+                alert(`Mais uma unidade de "${itemParaCarrinho.nome}" adicionada!`);
             } else {
-                alert(`Estoque máximo atingido para "${itemParaCarrinho.nome}"!`);
-                return;
+                alert(`Limite de estoque atingido para "${itemParaCarrinho.nome}"!`);
+                return; // Não salva se não tiver estoque
             }
         } else {
             if (itemParaCarrinho.estoque > 0) {
                 carrinho.push(itemParaCarrinho);
-                alert(`"${itemParaCarrinho.nome}" foi adicionado ao carrinho!`);
+                alert(`"${itemParaCarrinho.nome}" adicionado ao carrinho!`);
             } else {
-                alert(`Desculpe, "${itemParaCarrinho.nome}" está esgotado.`);
+                alert(`Produto esgotado!`);
                 return;
             }
         }
 
-        // 4. Salva de volta no navegador
+        // 4. Salva e notifica
         localStorage.setItem('carrinho', JSON.stringify(carrinho));
+        console.log("Carrinho atualizado:", carrinho);
 
     } catch (erro) {
         console.error("Erro ao adicionar:", erro);
-        alert("Não foi possível adicionar o produto. Verifique a conexão com o servidor.");
+        alert("Não foi possível adicionar. Verifique se o Backend está rodando.");
     }
 }
 
+// Inicia a escuta
 document.addEventListener('DOMContentLoaded', inicializarBotoesAdicionar);

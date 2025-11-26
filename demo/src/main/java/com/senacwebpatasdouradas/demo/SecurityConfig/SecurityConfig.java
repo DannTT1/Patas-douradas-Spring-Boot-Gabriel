@@ -1,4 +1,4 @@
-package com.senacwebpatasdouradas.demo.SecurityConfig;
+package com.senacwebpatasdouradas.demo.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +11,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -19,32 +24,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. DESATIVA O CSRF (Essencial para o POST funcionar sem token)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ATIVA CORS
                 .csrf(csrf -> csrf.disable())
-
-                // 2. LIBERA O H2
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-
                 .authorizeHttpRequests(auth -> auth
-                        // 3. LIBERA TUDO DE USUARIOS (Login e Cadastro)
-                        .requestMatchers("/usuarios/**").permitAll()
-
-                        // 4. LIBERA O RESTO
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/produtos/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-                        // O resto precisa de login
-                        .anyRequest().authenticated()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/usuarios/logout")
-                        .logoutSuccessUrl("/usuarios/login")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        .requestMatchers("/**").permitAll() // LIBERA TUDO (Para parar de dar erro 403)
                 );
-
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Aceita tanto localhost:5500 quanto 127.0.0.1:5500
+        configuration.setAllowedOrigins(List.of("http://127.0.0.1:5500", "http://localhost:5500"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean

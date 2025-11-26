@@ -1,43 +1,40 @@
 document.getElementById("form-login").addEventListener("submit", async function(event) {
     event.preventDefault();
 
-    // 1. Captura os dados
     const usernameInput = document.getElementById("email").value; 
     const senhaInput = document.getElementById("senha").value;
 
-    const payload = {
-        username: usernameInput, 
-        senha: senhaInput
-    };
-
-    console.log("Tentando logar com:", payload);
+    const payload = { username: usernameInput, senha: senhaInput };
 
     try {
         const response = await fetch("http://localhost:8080/usuarios/login", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            credentials: 'include', // Permite salvar a sessão
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-            const mensagemTexto = await response.text(); 
-            console.log("Sucesso:", mensagemTexto);
-
-            localStorage.setItem("usuarioLogado", "true");
-
-            alert("Login realizado! Redirecionando...");
+            // O Backend retorna: { "id": 1, "nome": "Fulano", "tipoUsuario": "CLIENTE" }
+            const dadosUsuario = await response.json(); 
             
-            window.location.href = "../../index.html"; 
+            console.log("Dados recebidos do Java:", dadosUsuario);
+
+            // REGRA DE OURO: Salvamos o OBJETO inteiro, não apenas "true"
+            localStorage.setItem("usuarioLogado", JSON.stringify(dadosUsuario));
+
+            alert(`Bem-vindo(a), ${dadosUsuario.nome}!`);
+
+            if (dadosUsuario.tipoUsuario === "VENDEDOR") {
+                window.location.href = "../vendedor/painel-vendedor.html"; 
+            } else {
+                window.location.href = "../../index.html"; 
+            }
         } else {
             const erroTexto = await response.text();
-            alert("Erro no Login: " + (erroTexto || "Usuário ou senha inválidos"));
+            alert("Erro no Login: " + erroTexto);
         }
-
     } catch (error) {
-        console.error("Erro técnico:", error);
-        alert("Erro de Conexão: Verifique se o Backend (Java) está rodando.");
+        console.error("Erro:", error);
+        alert("Erro de conexão com o servidor.");
     }
 });

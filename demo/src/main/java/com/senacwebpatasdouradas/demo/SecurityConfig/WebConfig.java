@@ -1,4 +1,4 @@
-package com.senacwebpatasdouradas.demo.SecurityConfig; // <--- OBRIGATÓRIO SER .config
+package com.example.demo.config; // Verifique se o pacote está correto para o seu projeto
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -9,10 +9,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://127.0.0.1:5500", "http://localhost:5500", "http://localhost:8080") // Libera seu Front
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
+        registry.addMapping("/**") // Aplica a todas as rotas
+                .allowedOrigins("*") // PERMITE TODAS AS ORIGENS (Frontend em qualquer porta)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT");
     }
 }

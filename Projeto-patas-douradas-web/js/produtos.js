@@ -8,23 +8,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         container.innerHTML = "";
 
+        if (produtos.length === 0) {
+            container.innerHTML = "<p>Nenhum produto encontrado.</p>";
+            return;
+        }
+
         produtos.forEach(produto => {
+            // Proteção contra nulos
+            const nomeProduto = produto.nome || "Produto";
+            const precoProduto = produto.precoUnitario ? produto.precoUnitario : 0.00;
+
             const card = document.createElement("div");
             card.className = "produto-card";
 
             // LÓGICA DE CAMINHO PARA PÁGINAS INTERNAS (pages/cliente/...)
             let imagePath = produto.imagemUrl;
-            if (!imagePath.startsWith("http")) {
+            if (!imagePath || imagePath === "null") {
+                imagePath = '../../assets/img/sem-imagem.png';
+            } else if (!imagePath.startsWith("http")) {
                 // Volta 2 pastas (../../) para chegar na raiz, depois assets/img
                 imagePath = `../../assets/img/${imagePath}`; 
             }
 
             card.innerHTML = `
                 <a href="produto-detalhes.html?id=${produto.id}">
-                    <img src="${imagePath}" alt="${produto.nome}" onerror="this.src='../../assets/img/areiahigienicafelina.png'">
+                    <div class="img-container">
+                        <img src="${imagePath}" alt="${nomeProduto}" onerror="this.src='../../assets/img/sem-imagem.png'">
+                    </div>
+                    
                     <div class="info-wrapper">
-                        <h3>${produto.nome}</h3>
-                        <p>R$ ${produto.precoUnitario.toFixed(2)}</p>
+                        <h3>${nomeProduto}</h3>
+                        <p>R$ ${precoProduto.toFixed(2)}</p>
                     </div>
                 </a>
                 <button class="adicionar-carrinho-btn" data-id="${produto.id}">Adicionar ao Carrinho</button>

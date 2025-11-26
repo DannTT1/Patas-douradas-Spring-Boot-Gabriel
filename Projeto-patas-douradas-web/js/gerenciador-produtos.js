@@ -1,9 +1,10 @@
+// Dados iniciais para caso o LocalStorage esteja vazio (Fallback)
 const produtosIniciais = [
     { 
         id: 1, 
         nome: "Areia Higiênica para Gatos", 
         preco: 29.90, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/areiahigienicafelina.png", 
+        imagem: "areiahigienicafelina.png", 
         estoque: 24,
         descricao: "Areia sanitária de alta absorção que forma torrões firmes.",
         destaque: true
@@ -12,7 +13,7 @@ const produtosIniciais = [
         id: 2, 
         nome: "Arranhador Felino", 
         preco: 89.90, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/arranhadorfelino.png", 
+        imagem: "arranhadorfelino.png", 
         estoque: 15,
         descricao: "Arranhador resistente para gatos, para afiar as unhas e aliviar o estresse.",
         destaque: true
@@ -21,7 +22,7 @@ const produtosIniciais = [
         id: 3, 
         nome: "Caixa de Transporte", 
         preco: 129.50, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/caixadetransporteparagatos.png", 
+        imagem: "caixadetransporteparagatos.png", 
         estoque: 12,
         descricao: "Caixa de transporte segura e ventilada, ideal para viagens.",
         destaque: true
@@ -30,7 +31,7 @@ const produtosIniciais = [
         id: 4, 
         nome: "Coleira Antipulgas", 
         preco: 59.90, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/coleiraantipulgascaesegatos.png", 
+        imagem: "coleiraantipulgascaesegatos.png", 
         estoque: 30,
         descricao: "Coleira eficaz contra pulgas e carrapatos para cães e gatos.",
         destaque: false
@@ -39,7 +40,7 @@ const produtosIniciais = [
         id: 5, 
         nome: "Frisbee para Cães", 
         preco: 25.00, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/frisbeeparacaes.png", 
+        imagem: "frisbeeparacaes.png", 
         estoque: 40,
         descricao: "Disco de frisbee flexível e seguro para brincadeiras de arremesso.",
         destaque: false
@@ -48,7 +49,7 @@ const produtosIniciais = [
         id: 6, 
         nome: "Mordedor Pequeno Canino", 
         preco: 19.90, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/mordedorpequenocanino.png", 
+        imagem: "mordedorpequenocanino.png", 
         estoque: 50,
         descricao: "Brinquedo mordedor para cães de porte pequeno, ajuda na saúde bucal.",
         destaque: false
@@ -57,7 +58,7 @@ const produtosIniciais = [
         id: 7, 
         nome: "Ração Premium para Cães", 
         preco: 199.90, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/raçaopremiumcanina15kg.png", 
+        imagem: "raçaopremiumcanina15kg.png", 
         estoque: 18,
         descricao: "Alimento completo e balanceado para cães de porte médio e grande.",
         destaque: false
@@ -66,7 +67,7 @@ const produtosIniciais = [
         id: 8, 
         nome: "Rosquinha para Gatos", 
         preco: 15.50, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/rosquinhaparagatos.png", 
+        imagem: "rosquinhaparagatos.png", 
         estoque: 35,
         descricao: "Brinquedo em formato de rosquinha com catnip para entreter seu gato.",
         destaque: false
@@ -75,13 +76,14 @@ const produtosIniciais = [
         id: 9, 
         nome: "Casinha de Madeira para Cães", 
         preco: 349.90, 
-        imagem: "/Projeto-patas-douradas-web/assets/img/casinhaparacaes.png", 
+        imagem: "casinhaparacaes.png", 
         estoque: 10,
         descricao: "Casinha de madeira resistente e confortável para seu cão.",
-        destaque: false
+        destaque: true
     }
 ];
 
+// Função para carregar produtos (Usado pelo Painel do Vendedor via LocalStorage)
 function carregarProdutos() {
     const produtosSalvos = localStorage.getItem("produtosDisponiveis");
     if (!produtosSalvos) {
@@ -91,54 +93,18 @@ function carregarProdutos() {
     try {
         return JSON.parse(produtosSalvos);
     } catch (e) {
+        console.error("Erro ao ler produtos do localStorage:", e);
+        // Se der erro, reseta para o inicial
         localStorage.setItem("produtosDisponiveis", JSON.stringify(produtosIniciais));
         return produtosIniciais;
     }
 }
 
+// Função para salvar produtos (Usado pelo Painel do Vendedor)
 function salvarProdutos(listaDeProdutos) {
     localStorage.setItem("produtosDisponiveis", JSON.stringify(listaDeProdutos));
 }
 
-
-
-
-function renderizarProdutosDaHomePage() {
-    document.addEventListener('DOMContentLoaded', () => {
-        const container = document.getElementById('produtos-destaque-lista');
-        if (!container) {
-            console.error("ERRO: A div #produtos-destaque-lista não foi encontrada no index.html.");
-            return;
-        }
-
-        const produtos = carregarProdutos();
-        const produtosEmDestaque = produtos.filter(p => p.destaque === true);
-        
-        container.innerHTML = '';
-
-        if (produtosEmDestaque.length > 0) {
-            produtosEmDestaque.forEach(produto => {
-                const card = document.createElement('div');
-                card.className = 'produto-card';
-                
-                const imagePath = produto.imagem;
-                
-                card.innerHTML = `
-                    <a href="pages/cliente/produto-detalhes.html?id=${produto.id}">
-                        <img src="${imagePath}" alt="${produto.nome}">
-                        <div class="info-wrapper">
-                            <h3>${produto.nome}</h3>
-                            <p>R$ ${produto.preco.toFixed(2)}</p>
-                        </div>
-                    </a>
-                    <button class="adicionar-carrinho-btn" data-id="${produto.id}">Adicionar ao Carrinho</button>
-                `;
-                container.appendChild(card);
-            });
-        } else {
-            container.innerHTML = "<p>Nenhum produto foi marcado como 'destaque: true'.</p>";
-        }
-    });
-}
-
-renderizarProdutosDaHomePage();
+// NOTA: Removemos a função 'renderizarProdutosDaHomePage' daqui
+// porque ela agora existe de forma independente e melhorada no arquivo 'js/home-destaques.js'
+// conectado ao Backend Java.

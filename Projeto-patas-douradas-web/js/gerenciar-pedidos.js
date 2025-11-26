@@ -1,56 +1,69 @@
-document.addEventListener("DOMContentLoaded", function () {
-    function obterNomeClientePorId(clienteId) {
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-        const cliente = usuarios.find(user => user.id === clienteId);
-        return cliente ? cliente.nome : "Cliente não identificado";
-    }
-
-    function exibirTodosOsPedidos() {
-        const container = document.getElementById("lista-pedidos");
-        if (!container) {
-            console.error("Elemento 'lista-pedidos' não encontrado.");
-            return;
-        }
-
-        const todosPedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-
-        
-        todosPedidos.sort((a, b) => b.id - a.id);
-
-        if (todosPedidos.length === 0) {
-            container.innerHTML = "<p>Nenhum pedido foi realizado ainda.</p>";
-            return;
-        }
-
-        container.innerHTML = ""; 
-
-        todosPedidos.forEach(pedido => {
-            const div = document.createElement("div");
-            div.className = "pedido-card"; 
-
-            const dataFormatada = new Date(pedido.id).toLocaleString("pt-BR", {
-                dateStyle: "long",
-                timeStyle: "short"
-            });
-
-            const itensHtml = pedido.itens.map(item =>
-                `<li>${item.nome} (x${item.quantidade}) - R$ ${item.preco.toFixed(2)}</li>`
-            ).join("");
-
-            const nomeCliente = obterNomeClientePorId(pedido.clienteId);
-
-            div.innerHTML = `
-                <h3>Pedido #${pedido.id}</h3>
-                <p><strong>Cliente:</strong> ${nomeCliente}</p>
-                <p><strong>Data:</strong> ${dataFormatada}</p>
-                <p><strong>Total:</strong> R$ ${pedido.total.toFixed(2)}</p>
-                <p><strong>Itens:</strong></p>
-                <ul>${itensHtml}</ul>
-            `;
-
-            container.appendChild(div);
-        });
-    }
-
-    exibirTodosOsPedidos();
+document.addEventListener("DOMContentLoaded", () => {
+    carregarPedidos();
 });
+
+async function carregarPedidos() {
+    const tabelaBody = document.querySelector("#tabela-pedidos tbody");
+    
+    try {
+        // Usa o endpoint que criamos para listar TUDO
+        const response = await fetch("http://localhost:8080/pedidos");
+        
+        if (!response.ok) throw new Error("Erro ao buscar pedidos");
+
+        const pedidos = await response.json();
+        
+        // Inverte para ver o mais recente primeiro
+        pedidos.reverse();
+
+        tabelaBody.innerHTML = "";
+
+        pedidos.forEach(pedido => {
+            const tr = document.createElement("tr");
+
+            // Formata data
+            const dataObj = new Date(pedido.data);
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+            // Pega o nome do cliente (ou deixa genérico se der erro)
+            const nomeCliente = pedido.nomeCliente || "Cliente não identificado";
+            
+            // Prepara a lista de itens para mostrar no alerta (Simples e funcional)
+            // JSON.stringify é usado para passar o objeto para a função do botão
+            const itensTexto = JSON.stringify(pedido.itens).replace(/"/g, '&quot;');
+
+            tr.innerHTML = `
+                <td>#${pedido.id}</td>
+                <td>${dataFormatada}</td>
+                <td>${nomeCliente}</td>
+                <td style="font-weight:bold; color:green;">R$ ${pedido.total.toFixed(2)}</td>
+                <td><span class="status-badge status-recebido">${pedido.status || 'Recebido'}</span></td>
+                <td>
+                    <button class="btn-ver" onclick="verItens('${nomeCliente}', ${pedido.id}, ${itensTexto})">
+                        📄 Ver Itens
+                    </button>
+                </td>
+            `;
+            tabelaBody.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error(error);
+        tabelaBody.innerHTML = "<tr><td colspan='6'>Erro ao carregar pedidos. Verifique o backend.</td></tr>";
+    }
+}
+
+// Função simples para mostrar o que tem no pedido
+function verItens(cliente, id, itens) {
+    let mensagem = `Pedido #${id} - Cliente: ${cliente}\n\nITENS A SEPARAR:\n------------------\n`;
+    
+    if (itens && itens.length > 0) {
+        itens.forEach(item => {
+            mensagem += `• ${item.quantidade}x ${item.nomeProduto}\n  (Subtotal: R$ ${item.subtotal.toFixed(2)})\n`;
+        });
+    } else {
+        mensagem += "Nenhum item encontrado (Erro de dados).";
+    }
+
+    alert(mensagem);
+}

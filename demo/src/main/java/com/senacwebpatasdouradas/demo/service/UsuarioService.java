@@ -2,6 +2,7 @@ package com.senacwebpatasdouradas.demo.service;
 
 import com.senacwebpatasdouradas.demo.dto.UsuarioDTO;
 import com.senacwebpatasdouradas.demo.dto.LoginDTO;
+import com.senacwebpatasdouradas.demo.dto.LoginResponseDTO;
 import java.util.List;
 
 public interface UsuarioService {
@@ -12,5 +13,7 @@ public interface UsuarioService {
     UsuarioDTO create(UsuarioDTO usuario);
     Boolean existByEmail(String email);
     UsuarioDTO update(int id, String novoNome, String novaSenha);
-    Object login(LoginDTO dto);
+
+    // CORRIGIDO: O contrato agora é LoginResponseDTO.
+    LoginResponseDTO login(LoginDTO dto);
 }

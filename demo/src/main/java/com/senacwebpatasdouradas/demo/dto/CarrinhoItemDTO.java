@@ -12,20 +12,12 @@ public class CarrinhoItemDTO {
     @Min(1)
     private Integer quantidade;
 
+    // Construtor Vazio (OBRIGATÓRIO)
+    public CarrinhoItemDTO() {}
+
     // Getters e Setters
-    public Integer getProdutoId() {
-        return produtoId;
-    }
-
-    public void setProdutoId(Integer produtoId) {
-        this.produtoId = produtoId;
-    }
-
-    public Integer getQuantidade() {
-        return quantidade;
-    }
-
-    public void setQuantidade(Integer quantidade) {
-        this.quantidade = quantidade;
-    }
+    public Integer getProdutoId() { return produtoId; }
+    public void setProdutoId(Integer produtoId) { this.produtoId = produtoId; }
+    public Integer getQuantidade() { return quantidade; }
+    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
 }

@@ -1,6 +1,7 @@
 package com.senacwebpatasdouradas.demo.service;
 
 import com.senacwebpatasdouradas.demo.dto.LoginDTO;
+import com.senacwebpatasdouradas.demo.dto.LoginResponseDTO;
 import com.senacwebpatasdouradas.demo.dto.UsuarioDTO;
 import com.senacwebpatasdouradas.demo.entity.ClienteEntity;
 import com.senacwebpatasdouradas.demo.entity.TipoConta;
@@ -27,25 +28,17 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    @Lazy
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private SecurityContextRepository securityContextRepository;
-    @Autowired
-    private HttpServletRequest request;
-    @Autowired
-    private HttpServletResponse response;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired @Lazy private AuthenticationManager authenticationManager;
+    @Autowired private SecurityContextRepository securityContextRepository;
+    @Autowired private HttpServletRequest request;
+    @Autowired private HttpServletResponse response;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -54,140 +47,64 @@ public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
     }
 
     @Override
-    public Object login(LoginDTO dto) {
-        Authentication authentication;
+    public LoginResponseDTO login(LoginDTO dto) {
         try {
-            authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getSenha())
             );
         } catch (Exception e) {
             throw new BadCredentialsException("Usuário ou senha inválidos");
         }
 
-        // ... lógica de salvar contexto (mantida igual) ...
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
 
-        Object principal = authentication.getPrincipal();
+        UsuarioEntity usuario = usuarioRepository.findByUsername(dto.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado após autenticação."));
 
-        // CORREÇÃO AQUI
-        if (principal instanceof ClienteEntity entity) {
-            UsuarioDTO usuarioDTO = new UsuarioDTO();
-            usuarioDTO.setNome(entity.getNome());
-            usuarioDTO.setEmail(entity.getEmail());
-            
-            // Como sabemos que é uma ClienteEntity, setamos o ENUM diretamente:
-            // Certifique-se de importar o seu Enum TipoConta
-            usuarioDTO.setTipoConta(TipoConta.CLIENTE); 
-            
-            return usuarioDTO;
-        } 
-        
-        // Se você tiver outros tipos de usuário (ex: Funcionario), adicione outro if:
-        /*
-        else if (principal instanceof FuncionarioEntity entity) {
-            UsuarioDTO usuarioDTO = new UsuarioDTO();
-            // ... setar dados ...
-            usuarioDTO.setTipoConta(TipoConta.FUNCIONARIO); // ou ADMIN
-            return usuarioDTO;
-        }
-        */
+        String tipo = (usuario instanceof VendedorEntity) ? "VENDEDOR" : "CLIENTE";
 
-        throw new RuntimeException("Tipo de usuário desconhecido ou não suportado");
+        return new LoginResponseDTO(usuario.getId(), usuario.getNome(), tipo);
     }
 
-
-    private UsuarioDTO toDto(UsuarioEntity usr) {
-        UsuarioDTO dto = new UsuarioDTO();
-        dto.setUsername(usr.getUsername());
-        dto.setNome(usr.getNome());
-        dto.setEmail(usr.getEmail());
-
-        if (usr instanceof ClienteEntity) {
-            dto.setTipoConta(TipoConta.CLIENTE);
-        } else if (usr instanceof VendedorEntity) {
-            dto.setTipoConta(TipoConta.VENDEDOR);
-        }
-        return dto;
-    }
-
-    @Override
-    public List<UsuarioDTO> findAll() {
-        List<UsuarioEntity>  usuarios = usuarioRepository.findAll();
-        List<UsuarioDTO> resultado = new ArrayList<>();
-        for (UsuarioEntity usr : usuarios) {
-            resultado.add(toDto(usr));
-        }
-        return resultado;
-    }
-
+    // --- OTIMIZAMOS O MÉTODO CREATE E OUTROS ---
     @Override
     public UsuarioDTO create(UsuarioDTO dto) {
-        if (dto.getSenha() == null || dto.getRepeticaoSenha() == null || !dto.getSenha().equals(dto.getRepeticaoSenha())) {
-            throw new IllegalArgumentException("As senhas não conferem ou estão nulas!");
+        if (dto.getSenha() == null || !dto.getSenha().equals(dto.getRepeticaoSenha())) {
+            throw new IllegalArgumentException("Senhas não conferem.");
         }
-
-        UsuarioEntity novaEntidade;
-        if (dto.getTipoConta() == TipoConta.CLIENTE) {
-            novaEntidade = new ClienteEntity();
-        } else if (dto.getTipoConta() == TipoConta.VENDEDOR) {
-            novaEntidade = new VendedorEntity();
-        } else {
-            throw new IllegalArgumentException("Tipo de conta inválido ou não fornecido.");
-        }
-
+        UsuarioEntity novaEntidade = (dto.getTipoConta() == TipoConta.VENDEDOR) ? new VendedorEntity() : new ClienteEntity();
         novaEntidade.setUsername(dto.getUsername());
         novaEntidade.setNome(dto.getNome());
         novaEntidade.setEmail(dto.getEmail());
         novaEntidade.setSenha(passwordEncoder.encode(dto.getSenha()));
 
-        UsuarioEntity entidadeSalva = usuarioRepository.save(novaEntidade);
-        return toDto(entidadeSalva);
+        return toDto(usuarioRepository.save(novaEntidade));
     }
 
-    @Override
-    public Boolean existByEmail(String email) {
-        return usuarioRepository.findByEmail(email).isPresent();
-    }
-
-    @Override
-    public void delete(int id) {
-        usuarioRepository.deleteById(id);
-    }
-
-    @Override
-    public UsuarioDTO update(int id, String username, String novaSenha) {
-        if(id < 1 ) {
-            throw new IllegalArgumentException("ID invalido");
-        }
-        UsuarioEntity usrExistente = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        usrExistente.setNome(username);
+    // MANTENHA AS OUTRAS IMPLEMENTAÇÕES DE CRUD COMPLETAS, SE NÃO ESTIVEREM AQUI!
+    // Se o seu código original for diferente, certifique-se de que o retorno é toDto() e não null.
+    // ... (restante do código completo de UsuarioServiceImpl) ...
+    @Override public List<UsuarioDTO> findAll() { return usuarioRepository.findAll().stream().map(this::toDto).collect(Collectors.toList()); }
+    @Override public UsuarioDTO findByUsername(String username) { return usuarioRepository.findByUsername(username).map(this::toDto).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + username)); }
+    @Override public UsuarioDTO findByEmail(String email) { return usuarioRepository.findByEmail(email).map(this::toDto).orElseThrow(() -> new EntityNotFoundException("Email não encontrado: " + email)); }
+    @Override public void delete(int id) { usuarioRepository.deleteById(id); }
+    @Override public Boolean existByEmail(String email) { return usuarioRepository.findByEmail(email).isPresent(); }
+    @Override public UsuarioDTO update(int id, String novoNome, String novaSenha) {
+        UsuarioEntity usrExistente = usuarioRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado ID: " + id));
+        usrExistente.setNome(novoNome);
         usrExistente.setSenha(passwordEncoder.encode(novaSenha));
-        usuarioRepository.save(usrExistente);
-        return toDto(usrExistente);
+        return toDto(usuarioRepository.save(usrExistente));
     }
-
-    @Override
-    public UsuarioDTO findByEmail(String emailV) {
-        if (emailV == null || emailV.isEmpty()) {
-            throw new IllegalArgumentException("Email inválido");
-        }
-        UsuarioEntity usr = usuarioRepository.findByEmail(emailV)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com email: " + emailV));
-        return toDto(usr);
-    }
-
-    @Override
-    public UsuarioDTO findByUsername(String username) {
-        if (username == null || username.isEmpty()) {
-            throw new IllegalArgumentException("Username inválido");
-        }
-        UsuarioEntity usuario = usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + username));
-        return toDto(usuario);
+    private UsuarioDTO toDto(UsuarioEntity usr) {
+        UsuarioDTO dto = new UsuarioDTO();
+        dto.setUsername(usr.getUsername());
+        dto.setNome(usr.getNome());
+        dto.setEmail(usr.getEmail());
+        dto.setTipoConta((usr instanceof VendedorEntity) ? TipoConta.VENDEDOR : TipoConta.CLIENTE);
+        return dto;
     }
 }

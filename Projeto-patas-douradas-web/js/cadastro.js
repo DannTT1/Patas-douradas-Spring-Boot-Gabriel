@@ -35,6 +35,7 @@ document.getElementById("formularioCadastro").addEventListener("submit", async f
             body: JSON.stringify(objetoCadastro)
         });
 
+        
         if (response.ok) {
             const jsonResposta = await response.json().catch(() => {});
             console.log("Sucesso:", jsonResposta);
