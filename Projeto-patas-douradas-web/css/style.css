@@ -475,3 +475,107 @@ td {
     transform: translateX(-5px); /* Pequeno movimento para a esquerda */
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
+
+
+/* =========================================
+   4. FORMULÁRIOS (LOGIN, CADASTRO, PRODUTOS)
+   ========================================= */
+
+/* Estilo Geral dos Containers de Formulário */
+.login-container, .form-container {
+    max-width: 480px;
+    margin: 40px auto;
+    padding: 30px;
+    border-radius: 15px;
+    background-color: var(--cor-branca); /* Ou var(--cor-cinza-claro) se preferir o fundo cinza */
+    box-shadow: var(--sombra-card);
+}
+
+/* Se quiser o login especificamente com fundo cinza como antes: */
+.login-container {
+    background-color: #f8f8f8; /* Cinza claro específico do login */
+    text-align: left;
+}
+
+/* Inputs e Labels (Genérico para funcionar em qualquer form) */
+.login-container label, 
+.form-container label,
+.form-group label { 
+    display: block; 
+    margin-bottom: 8px; 
+    font-weight: 600; 
+    color: #555; 
+}
+
+.login-container input, 
+.login-container select,
+.form-container input, 
+.form-container textarea, 
+.form-container select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px; /* Espaço garantido abaixo do input */
+    border: 1px solid var(--cor-cinza-borda);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #fff;
+    box-sizing: border-box; /* Garante que o padding não quebre a largura */
+}
+
+.login-container input:focus,
+.form-container input:focus {
+    border-color: var(--cor-primaria);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.1);
+}
+
+/* Botões de Formulário (Login e Salvar) */
+.login-container button,
+button[type="submit"], 
+.btn-salvar {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--cor-primaria);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    margin-top: 10px;
+}
+
+.login-container button:hover,
+button[type="submit"]:hover, 
+.btn-salvar:hover {
+    background-color: var(--cor-primaria-hover);
+    transform: translateY(-2px);
+}
+
+/* Link de "Cadastre-se" no login */
+.login-container p {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+
+.login-container a {
+    color: var(--cor-primaria);
+    font-weight: bold;
+}
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+/* Preview de imagem (Específico do Painel) */
+#img-preview {
+    display: block;
+    margin-top: 10px;
+    max-width: 100px;
+    max-height: 100px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    object-fit: contain;
+    background-color: white;
+}
