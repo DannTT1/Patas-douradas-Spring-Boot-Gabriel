@@ -2,11 +2,9 @@ package com.senacwebpatasdouradas.demo.service;
 
 import com.senacwebpatasdouradas.demo.dto.UsuarioDTO;
 import com.senacwebpatasdouradas.demo.dto.LoginDTO;
-import com.senacwebpatasdouradas.demo.dto.SessaoDTO;
 import java.util.List;
 
 public interface UsuarioService {
-
     List<UsuarioDTO> findAll();
     UsuarioDTO findByUsername(String username);
     UsuarioDTO findByEmail(String email);
@@ -14,5 +12,5 @@ public interface UsuarioService {
     UsuarioDTO create(UsuarioDTO usuario);
     Boolean existByEmail(String email);
     UsuarioDTO update(int id, String novoNome, String novaSenha);
-    SessaoDTO login(LoginDTO dto);
+    String login(LoginDTO dto);
 }

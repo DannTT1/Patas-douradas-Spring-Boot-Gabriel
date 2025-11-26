@@ -1,24 +1,28 @@
 package com.senacwebpatasdouradas.demo.service;
 
 import com.senacwebpatasdouradas.demo.dto.LoginDTO;
-import com.senacwebpatasdouradas.demo.dto.SessaoDTO;
 import com.senacwebpatasdouradas.demo.dto.UsuarioDTO;
 import com.senacwebpatasdouradas.demo.entity.ClienteEntity;
 import com.senacwebpatasdouradas.demo.entity.TipoConta;
 import com.senacwebpatasdouradas.demo.entity.UsuarioEntity;
 import com.senacwebpatasdouradas.demo.entity.VendedorEntity;
 import com.senacwebpatasdouradas.demo.repository.UsuarioRepository;
-import com.senacwebpatasdouradas.demo.securityconfig.JwtService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,12 +35,17 @@ public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
     private UsuarioRepository usuarioRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtService jwtService;
 
     @Autowired
     @Lazy
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private SecurityContextRepository securityContextRepository;
+    @Autowired
+    private HttpServletRequest request;
+    @Autowired
+    private HttpServletResponse response;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -45,30 +54,24 @@ public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
     }
 
     @Override
-    public SessaoDTO login(LoginDTO dto) {
+    public String login(LoginDTO dto) { // Mudança no retorno
+        Authentication authentication;
         try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            dto.getUsername(),
-                            dto.getSenha()
-                    )
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getSenha())
             );
         } catch (Exception e) {
             throw new BadCredentialsException("Usuário ou senha inválidos");
         }
 
-        UsuarioEntity usuario = usuarioRepository.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException("Erro ao carregar usuário pós-login"));
+        // Cria a sessão (Cookie)
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, request, response);
 
-        String jwtToken = jwtService.generateToken(usuario);
-
-        SessaoDTO sessaoDTO = new SessaoDTO();
-        sessaoDTO.setMensagem("Login bem-sucedido!");
-        sessaoDTO.setToken(jwtToken);
-
-        return sessaoDTO;
+        return "Login realizado com sucesso!"; // Retorna apenas String
     }
-
 
 
     private UsuarioDTO toDto(UsuarioEntity usr) {
@@ -82,7 +85,6 @@ public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
         } else if (usr instanceof VendedorEntity) {
             dto.setTipoConta(TipoConta.VENDEDOR);
         }
-
         return dto;
     }
 
@@ -135,7 +137,6 @@ public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
         if(id < 1 ) {
             throw new IllegalArgumentException("ID invalido");
         }
-
         UsuarioEntity usrExistente = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 

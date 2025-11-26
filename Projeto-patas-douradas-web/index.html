@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Patas Douradas</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="cabecalho">
+        <a href="index.html" class="logo" aria-label="Página Inicial da Patas Douradas">🐾 PatasDouradas.com</a>
+        <nav class="menu">
+            <a href="index.html">Home</a>
+            <a href="pages/cliente/produtos-lista.html">Produtos</a>
+            <a href="pages/cliente/carrinho.html">Carrinho</a>
+            <a href="pages/cliente/pedidos-cliente.html">Pedidos</a>
+            <button id="btn-logout" class="btn-logout">Sair</button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Bem-vindo à Patas Douradas!</h1>
+                <p>Tudo o que seu melhor amigo precisa, em um só lugar.</p>
+                <a href="pages/cliente/produtos-lista.html" class="btn-principal">Ver Produtos</a>
+            </div>
+        </section>
+
+        <div class="container-pagina">
+            <h2>✨ Produtos em Destaque</h2>
+            <div id="produtos-destaque-lista" class="produtos-container">
+                <p>Carregando produtos...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Sobre a Patas Douradas</h3>
+                <p>Oferecemos os melhores produtos para a saúde e bem-estar do seu pet.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contato</h3>
+                <p>Email: contato@patasdouradas.com</p>
+                <p>Telefone: (11) 98765-4321</p>
+            </div>
+            <div class="footer-section">
+                <h3>Redes Sociais</h3>
+                <a href="https://hemocentro.unifesp.br/">Parceiro</a> | 
+                <a href="https://www.instagram.com/hemocentrounifesp/">Instagram</a> | 
+                <a href="#">Twitter</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/carrinho-eventos.js"></script>
+    <script src="js/home-destaques.js"></script>
+</body>
+</html>
