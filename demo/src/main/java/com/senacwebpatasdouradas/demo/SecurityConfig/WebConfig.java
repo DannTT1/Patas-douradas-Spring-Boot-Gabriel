@@ -1,4 +1,4 @@
-package com.example.demo.config; // Verifique se o pacote está correto para o seu projeto
+package com.senacwebpatasdouradas.demo.SecurityConfig; // Verifique se o pacote está correto para o seu projeto
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
