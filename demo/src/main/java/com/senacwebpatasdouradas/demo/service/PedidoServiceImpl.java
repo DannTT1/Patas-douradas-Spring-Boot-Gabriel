@@ -36,20 +36,26 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public List<PedidoDTO> listarPorCliente(int clienteId) {
         List<PedidoEntity> pedidos = pedidoRepository.findByUsuarioId(clienteId);
-        List<PedidoDTO> dtos = new ArrayList<>();
-        for (PedidoEntity pedido : pedidos) {
-            dtos.add(toDto(pedido));
-        }
-        return dtos;
+        // Usa o método auxiliar toDto para converter
+        return pedidos.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    // --- IMPLEMENTAÇÃO DO NOVO MÉTODO ---
     @Override
-    @Transactional // ESSENCIAL: Garante que o estoque só baixa se o pedido for salvo
-    public PedidoDTO createPedido(PedidoCriadoDTO dto) {
+    public List<PedidoDTO> listarTodos() {
+        // Busca TUDO no banco
+        List<PedidoEntity> pedidos = pedidoRepository.findAll();
+        // Converte para DTO usando o método auxiliar abaixo
+        return pedidos.stream().map(this::toDto).collect(Collectors.toList());
+    }
+    // ------------------------------------
 
+    @Override
+    @Transactional
+    public PedidoDTO createPedido(PedidoCriadoDTO dto) {
         // 1. Verifica Usuário
         UsuarioEntity usuario = usuarioRepository.findById(dto.getUsuarioId())
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado (ID: " + dto.getUsuarioId() + ")"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
         PedidoEntity pedido = new PedidoEntity();
         pedido.setUsuario(usuario);
@@ -61,17 +67,15 @@ public class PedidoServiceImpl implements PedidoService {
         // 2. Processa Itens e Estoque
         for (var itemDTO : dto.getItens()) {
             ProdutoEntity produto = produtoRepository.findById(itemDTO.getProdutoId())
-                    .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado (ID: " + itemDTO.getProdutoId() + ")"));
+                    .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
 
-            // VALIDAÇÃO DE ESTOQUE
             if (produto.getEstoque() < itemDTO.getQuantidade()) {
-                throw new RuntimeException("Estoque insuficiente para: " + produto.getNome() +
-                        ". Disponível: " + produto.getEstoque());
+                throw new RuntimeException("Estoque insuficiente para: " + produto.getNome());
             }
 
-            // DEDUZ O ESTOQUE
+            // Baixa no estoque
             produto.setEstoque(produto.getEstoque() - itemDTO.getQuantidade());
-            produtoRepository.save(produto); // Atualiza no banco imediatamente
+            produtoRepository.save(produto);
 
             BigDecimal subtotal = produto.getPrecoUnitario().multiply(BigDecimal.valueOf(itemDTO.getQuantidade()));
             totalGeral = totalGeral.add(subtotal);
@@ -88,10 +92,10 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setTotal(totalGeral);
 
         PedidoEntity pedidoSalvo = pedidoRepository.save(pedido);
-
         return toDto(pedidoSalvo);
     }
 
+    // Método auxiliar que converte Entity -> DTO (MANTIDO DO ORIGINAL)
     private PedidoDTO toDto(PedidoEntity entity) {
         PedidoDTO dto = new PedidoDTO();
         dto.setId(entity.getId());
